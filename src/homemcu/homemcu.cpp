@@ -82,7 +82,7 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
   if (strcmp(topic, configTopic) == 0)
   {
     DynamicJsonDocument json(1024);
-    DeserializationError error = deserializeJson(json, payload);
+    DeserializationError error = deserializeJson(json, (const uint8_t *)payload);
     if (error)
     {
       Serial.print("config deserialization failed: ");
