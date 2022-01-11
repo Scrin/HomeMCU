@@ -31,6 +31,13 @@ namespace utils
    * @param field field name, such as temperature or co2
    */
   void getUniqueID(char *text, const char *type, const char *field);
+
+  /**
+ * @brief Get the uptime in milliseconds. Effectively a 64bit version of the millis() function
+ * 
+ * @return int64_t the current uptime in milliseconds.
+ */
+  uint64_t uptime();
 };
 
 #endif

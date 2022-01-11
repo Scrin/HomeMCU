@@ -24,3 +24,17 @@ void utils::getUniqueID(char *text, const char *type, const char *field)
   sprintf(macStr, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   snprintf(text, MQTT_MAX_TOPIC_LENGTH, "homemcu_%s_%s_%s", macStr, type, field);
 }
+
+uint32_t millisHigh = 0;
+unsigned long lastMillis = 0;
+uint64_t utils::uptime()
+{
+  int64_t millisLow = millis();
+
+  if (lastMillis > millisLow)
+    millisHigh++;
+
+  lastMillis = millisLow;
+
+  return ((uint64_t)millisHigh << 32) + millisLow;
+}

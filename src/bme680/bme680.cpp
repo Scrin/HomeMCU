@@ -130,21 +130,7 @@ void BME680::loadState()
 
 void BME680::updateState()
 {
-  bool update = false;
-  if (stateUpdateCounter == 0)
-  {
-    // First state update when IAQ accuracy is >= 3
-    if (iaqSensor.iaqAccuracy >= 3)
-    {
-      update = true;
-    }
-  }
-  else if ((stateUpdateCounter * STATE_SAVE_PERIOD) < millis())
-  {
-    update = true;
-  }
-
-  if (update)
+  if ((stateUpdateCounter * STATE_SAVE_PERIOD) < utils::uptime() && iaqSensor.iaqAccuracy >= 3)
   {
     stateUpdateCounter++;
     iaqSensor.getState(bsecState);
