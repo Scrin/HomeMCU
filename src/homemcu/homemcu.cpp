@@ -116,12 +116,12 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
         // config update, restart to re-initialize stuff
         Log::info("New config! restarting...");
         restarting = true;
-        return;
       }
       else
       {
         Log::info("Got config message, but it's identical to the current config. Assuming it's a duplicate");
       }
+      return;
     }
 
     if (json["name"])
