@@ -26,11 +26,10 @@ void MHZ19::setup(JsonObject config)
 
 void MHZ19::loop()
 {
-  unsigned long now = millis();
-  if (lastUpdate < now // lastUpdate is in the future after counter rollover
-      && (now < 10000  // prevent integer underflow in next condition
-          || lastUpdate > now - 10000))
+  uint64_t now = Utils::uptime();
+  if (lastUpdate + 10000 > now)
     return;
+
   lastUpdate = now;
 
   measurement_t m = sensor.getMeasurement();
