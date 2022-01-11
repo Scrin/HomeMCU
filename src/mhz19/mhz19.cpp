@@ -31,6 +31,7 @@ void MHZ19::loop()
       && (now < 10000  // prevent integer underflow in next condition
           || lastUpdate > now - 10000))
     return;
+  lastUpdate = now;
 
   measurement_t m = sensor.getMeasurement();
 
@@ -65,5 +66,4 @@ void MHZ19::loop()
   serializeJson(json, msg);
   HomeMCU::client.publish(topic, msg.c_str());
   publishHomeassistant(m.state);
-  lastUpdate = now;
 }

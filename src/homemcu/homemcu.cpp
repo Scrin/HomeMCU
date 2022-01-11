@@ -1,6 +1,7 @@
 #include "homemcu.h"
 
 #include <ESP8266WiFi.h>
+#include <CRC32.h>
 
 char *HomeMCU::name = strdup(WiFi.macAddress().c_str());
 
@@ -12,6 +13,7 @@ BME680 bme680;
 
 bool restarting = false;
 bool configLoaded = false;
+uint32_t HomeMCU::currentConfigChecksum = 0;
 char HomeMCU::statusTopic[MQTT_MAX_TOPIC_LENGTH];
 char configTopic[MQTT_MAX_TOPIC_LENGTH];
 
@@ -82,7 +84,9 @@ void HomeMCU::updateState()
   {
     json[MHZ19::type] = mhz19.enabled;
     json[BME680::type] = bme680.enabled;
+    json["config_checksum"] = currentConfigChecksum;
   }
+  json["build_ts"] = BUILD_TIMESTAMP;
   json["uptime"] = Utils::uptime();
 
   String msg;
@@ -92,7 +96,8 @@ void HomeMCU::updateState()
 
 void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
 {
-  Log::info("Message arrived at " + String(topic));
+  uint32_t checksum = CRC32::calculate(payload, length);
+  Log::info("Message arrived at " + String(topic) + " with checksum " + String(checksum));
 
   if (strcmp(topic, configTopic) == 0)
   {
@@ -106,10 +111,17 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
 
     if (configLoaded)
     {
-      // config update, restart to re-initialize stuff
-      Log::info("New config! restarting...");
-      restarting = true;
-      return;
+      if (checksum != currentConfigChecksum)
+      {
+        // config update, restart to re-initialize stuff
+        Log::info("New config! restarting...");
+        restarting = true;
+        return;
+      }
+      else
+      {
+        Log::info("Got config message, but it's identical to the current config. Assuming it's a duplicate");
+      }
     }
 
     if (json["name"])
@@ -122,6 +134,7 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
     bme680.setup(json[BME680::type]);
 
     configLoaded = true;
+    currentConfigChecksum = checksum;
     updateState();
   }
 }

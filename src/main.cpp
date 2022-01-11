@@ -34,7 +34,7 @@ void setup()
   }
   Serial.println();
   Log::setup();
-  Log::info("Wifi connected. MAC: " + WiFi.macAddress() + " IP: " + WiFi.localIP().toString());
+  Log::info("Wifi connected. MAC: " + WiFi.macAddress() + " IP: " + WiFi.localIP().toString() + " build timestamp: " + BUILD_TIMESTAMP);
   MDNS.begin(name);
   MDNS.addService("http", "tcp", 80);
 

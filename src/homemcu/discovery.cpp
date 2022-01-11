@@ -19,6 +19,8 @@ void HomeMCU::updateDiscovery(DiscoveryData &data)
     json["sensor_type"] = data.sensorName;
     json["ip"] = WiFi.localIP();
     json["mac"] = WiFi.macAddress();
+    json["config_checksum"] = HomeMCU::currentConfigChecksum;
+    json["build_ts"] = BUILD_TIMESTAMP;
     for (auto const &pair : data.attributes)
       json[pair.first] = pair.second;
 

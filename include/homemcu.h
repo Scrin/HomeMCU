@@ -27,6 +27,7 @@ namespace HomeMCU
 
   extern PubSubClient client;
   extern char *name;
+  extern uint32_t currentConfigChecksum;
   extern char statusTopic[MQTT_MAX_TOPIC_LENGTH];
 
   void setup();
