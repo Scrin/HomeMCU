@@ -15,10 +15,13 @@ bool configLoaded = false;
 char HomeMCU::statusTopic[MQTT_MAX_TOPIC_LENGTH];
 char configTopic[MQTT_MAX_TOPIC_LENGTH];
 
+uint64_t lastStatusUpdateLog = 0;
+uint64_t lastStatusUpdateMqtt = 0;
+
 void HomeMCU::setup()
 {
-  utils::getStateTopic(statusTopic, "status");
-  utils::getStateTopic(configTopic, "config");
+  Utils::getStateTopic(statusTopic, "status");
+  Utils::getStateTopic(configTopic, "config");
 
   client.setServer(MQTT_SERVER, MQTT_PORT);
   client.setCallback(mqttCallback);
@@ -45,6 +48,18 @@ void HomeMCU::loop()
 
   if (bme680.enabled)
     bme680.loop();
+
+  uint64_t now = Utils::uptime();
+  if (lastStatusUpdateMqtt + 10 * 1000 < now)
+  {
+    lastStatusUpdateMqtt = now;
+    updateState();
+  }
+  if (lastStatusUpdateLog + 60 * 60 * 1000 < now)
+  {
+    lastStatusUpdateLog = now;
+    Log::info("Uptime is now " + String(now / 1000.0) + " seconds");
+  }
 }
 
 void HomeMCU::updateState()
@@ -68,6 +83,7 @@ void HomeMCU::updateState()
     json[MHZ19::type] = mhz19.enabled;
     json[BME680::type] = bme680.enabled;
   }
+  json["uptime"] = Utils::uptime();
 
   String msg;
   serializeJson(json, msg);
@@ -76,8 +92,7 @@ void HomeMCU::updateState()
 
 void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
 {
-  Serial.print("Message arrived at ");
-  Serial.println(topic);
+  Log::info("Message arrived at " + String(topic));
 
   if (strcmp(topic, configTopic) == 0)
   {
@@ -85,15 +100,14 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
     DeserializationError error = deserializeJson(json, (const uint8_t *)payload);
     if (error)
     {
-      Serial.print("config deserialization failed: ");
-      Serial.println(error.f_str());
+      Log::warn("Config deserialization failed: " + String(error.c_str()));
       return;
     }
 
     if (configLoaded)
     {
       // config update, restart to re-initialize stuff
-      Serial.println("New config! restarting...");
+      Log::info("New config! restarting...");
       restarting = true;
       return;
     }
@@ -124,18 +138,16 @@ void HomeMCU::checkConnection()
   {
     if (retries < 150)
     {
-      Serial.print("Attempting MQTT connection...");
+      Log::info("Attempting MQTT connection...");
       if (client.connect(WiFi.macAddress().c_str(), MQTT_USERNAME, MQTT_PASSWORD, statusTopic, 0, true, "{\"status\":\"offline\"}"))
       {
-        Serial.println("connected");
+        Log::info("MQTT connected");
         client.subscribe(configTopic);
         updateState();
       }
       else
       {
-        Serial.print("failed, rc=");
-        Serial.print(client.state());
-        Serial.println(" try again in 5 seconds");
+        Log::error("MQTT connect failed, rc=" + String(client.state()) + " try again in 5 seconds");
         retries++;
         delay(5000);
       }

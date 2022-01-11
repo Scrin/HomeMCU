@@ -15,10 +15,10 @@ void BME680::setup(JsonObject config)
   if (!config["enabled"])
   {
     unpublishHomeassistant();
-    Serial.println("bme680 disabled");
+    Log::info("bme680 disabled");
     return;
   }
-  Serial.println("bme680 enabled");
+  Log::info("bme680 enabled");
   const char *name = config["name"];
   bool staticIaq = config["static_iaq"];
   if (name != nullptr)
@@ -29,7 +29,7 @@ void BME680::setup(JsonObject config)
   {
     this->name = HomeMCU::name;
   }
-  utils::getStateTopic(this->topic, BME680::type);
+  Utils::getStateTopic(this->topic, BME680::type);
 
   EEPROM.begin(BSEC_MAX_STATE_BLOB_SIZE + 1); // 1st address for the length
   Wire.begin();
@@ -37,9 +37,8 @@ void BME680::setup(JsonObject config)
 
   iaqSensor.setConfig(staticIaq ? bsecConfigStatic : bsecConfigDynamic);
 
-  String output = "\nBSEC library version " + String(iaqSensor.version.major) + "." + String(iaqSensor.version.minor) + "." + String(iaqSensor.version.major_bugfix) + "." + String(iaqSensor.version.minor_bugfix);
-  Serial.println(output);
-  Serial.println(staticIaq ? "using static iaq" : "using dynamic iaq");
+  Log::info("BSEC library version " + String(iaqSensor.version.major) + "." + String(iaqSensor.version.minor) + "." + String(iaqSensor.version.major_bugfix) + "." + String(iaqSensor.version.minor_bugfix));
+  Log::info(staticIaq ? "using static iaq" : "using dynamic iaq");
 
   loadState();
 
@@ -105,21 +104,24 @@ void BME680::loadState()
 {
   if (EEPROM.read(0) == BSEC_MAX_STATE_BLOB_SIZE)
   {
-    Serial.println("Reading state from EEPROM");
+    Log::info("Reading state from EEPROM");
 
     for (uint8_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
     {
       bsecState[i] = EEPROM.read(i + 1);
-      Serial.print(bsecState[i], HEX);
-      Serial.print(" ");
     }
-    Serial.println();
 
     iaqSensor.setState(bsecState);
+
+    char str[BSEC_MAX_STATE_BLOB_SIZE * 2 + 1];
+    str[BSEC_MAX_STATE_BLOB_SIZE * 2] = 0;
+    for (size_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
+      sprintf(&str[2 * i], "%02X", bsecState[i]);
+    Log::debug("bsec state loaded: " + String(str));
   }
   else
   {
-    Serial.println("Erasing EEPROM");
+    Log::info("Erasing EEPROM");
 
     for (uint8_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE + 1; i++)
       EEPROM.write(i, 0);
@@ -130,22 +132,25 @@ void BME680::loadState()
 
 void BME680::updateState()
 {
-  if ((stateUpdateCounter * STATE_SAVE_PERIOD) < utils::uptime() && iaqSensor.iaqAccuracy >= 3)
+  if ((stateUpdateCounter * STATE_SAVE_PERIOD) < Utils::uptime() && iaqSensor.iaqAccuracy >= 3)
   {
     stateUpdateCounter++;
     iaqSensor.getState(bsecState);
 
-    Serial.println("Writing state to EEPROM");
+    Log::info("Writing state to EEPROM");
 
     for (uint8_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
     {
       EEPROM.write(i + 1, bsecState[i]);
-      Serial.print(bsecState[i], HEX);
-      Serial.print(" ");
     }
-    Serial.println();
 
     EEPROM.write(0, BSEC_MAX_STATE_BLOB_SIZE);
     EEPROM.commit();
+
+    char str[BSEC_MAX_STATE_BLOB_SIZE * 2 + 1];
+    str[BSEC_MAX_STATE_BLOB_SIZE * 2] = 0;
+    for (size_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
+      sprintf(&str[2 * i], "%02X", bsecState[i]);
+    Log::debug("bsec state saved: " + String(str));
   }
 }

@@ -7,9 +7,9 @@ void HomeMCU::updateDiscovery(DiscoveryData &data)
   char configTopic[MQTT_MAX_TOPIC_LENGTH];
   char attributesTopic[MQTT_MAX_TOPIC_LENGTH];
   char id[MQTT_MAX_TOPIC_LENGTH];
-  utils::getDiscoveryTopic(configTopic, data.component, data.type, data.field, "config");
-  utils::getDiscoveryTopic(attributesTopic, data.component, data.type, data.field, "attributes");
-  utils::getUniqueID(id, data.type, data.field);
+  Utils::getDiscoveryTopic(configTopic, data.component, data.type, data.field, "config");
+  Utils::getDiscoveryTopic(attributesTopic, data.component, data.type, data.field, "attributes");
+  Utils::getUniqueID(id, data.type, data.field);
 
   { // attributes
     DynamicJsonDocument json(1024);
@@ -61,6 +61,6 @@ void HomeMCU::updateDiscovery(DiscoveryData &data)
 void HomeMCU::deleteDiscovery(const char *component, const char *type, const char *field)
 {
   char configTopic[MQTT_MAX_TOPIC_LENGTH];
-  utils::getDiscoveryTopic(configTopic, component, type, field, "config");
+  Utils::getDiscoveryTopic(configTopic, component, type, field, "config");
   HomeMCU::client.publish(configTopic, "");
 }

@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "utils.h"
+#include "log.h"
 #include "homemcu.h"
 
 #define MQTT_MAX_TOPIC_LENGTH 256

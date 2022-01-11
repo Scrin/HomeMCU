@@ -11,3 +11,7 @@
 
 #define MQTT_PREFIX "HomeMCU/"
 #define MQTT_HA_DISCOVERY_PREFIX "homeassistant/"
+
+// uncomment to enable syslog
+//#define SYSLOG_SERVER syslog.server.address
+//#define SYSLOG_PORT 514

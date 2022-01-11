@@ -2,7 +2,7 @@
 #define _utils
 #include "common.h"
 
-namespace utils
+namespace Utils
 {
   /** 
    * @brief Gets the MQTT topic for states

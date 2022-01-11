@@ -7,10 +7,10 @@ void MHZ19::setup(JsonObject config)
   if (!config["enabled"])
   {
     unpublishHomeassistant();
-    Serial.println("mhz19 disabled");
+    Log::info("mhz19 disabled");
     return;
   }
-  Serial.println("mhz19 enabled");
+  Log::info("mhz19 enabled");
   const char *name = config["name"];
   if (name != nullptr)
   {
@@ -20,7 +20,7 @@ void MHZ19::setup(JsonObject config)
   {
     this->name = HomeMCU::name;
   }
-  utils::getStateTopic(this->topic, MHZ19::type);
+  Utils::getStateTopic(this->topic, MHZ19::type);
   enabled = true;
 }
 
@@ -41,7 +41,7 @@ void MHZ19::loop()
         || m.co2_ppm == 512 /* MH-Z19C magic number on first query */
         || m.co2_ppm == -1) /* Invalid data, happens when the MCU on the sensor is still booting */
     {
-      Serial.println("CO2 sensor not ready...");
+      Log::info("CO2 sensor not ready...");
       return;
     }
     else
@@ -52,7 +52,7 @@ void MHZ19::loop()
 
   if (m.state == -1)
   {
-    Serial.println("CO2 sensor in invalid state!");
+    Log::error("CO2 sensor in invalid state!");
     return;
   }
 
