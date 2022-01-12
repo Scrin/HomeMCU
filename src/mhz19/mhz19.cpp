@@ -21,7 +21,6 @@ void MHZ19::setup(JsonObject config)
     this->name = HomeMCU::name;
   }
   Utils::getStateTopic(this->topic, MHZ19::type);
-  sensor.setAutoCalibration(false);
   enabled = true;
 }
 
