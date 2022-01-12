@@ -60,6 +60,24 @@ All fields are optional. Field description:
   - `enabled`: whether to enable MH-Z19 sensor. false by default.
   - `name`: Override the name for entities based on this sensor. Useful if the sensor is in a different place but connected to a shared MCU. By default the name is the same as the top level name.
 
+## MQTT topics
+
+- `HomeMCU/<mac>/status` retained status topic set by the HomeMCU
+- `HomeMCU/<mac>/config` retained config topic set by the user for the HomeMCU
+- `HomeMCU/<mac>/command` commands to send to the HomeMCU
+- `HomeMCU/<mac>/<sensortype>` sensor-specific state topics for the enabled sensors
+- `homeassistant/<component>/homemcu_<mac>_<sensortype>_<field>/config` [MQTT Discovery topics](https://www.home-assistant.io/docs/mqtt/discovery/) for Home Assistant entities
+- `homeassistant/<component>/homemcu_<mac>_<sensortype>_<field>/attributes` [json_attributes topic](https://www.home-assistant.io/integrations/sensor.mqtt/#json_attributes_topic) for Home Assistant entities
+
+## MQTT commands
+
+These can be sent to the command topic. The commands prefixed with a sensor handler such as "mhz19" or "bme680" are processed only if the corresponding sensor handler is already enabled and setup has finished (check the status topic if you need to be sure). Note that a stopped HomeMCU will not process any other commands except restart.
+
+- `restart` restart the MCU, rarely needed but sometimes useful to re-initialize misbehaving sensors or to restart processing after a stop command
+- `stop` stops processing sensors and calls for a graceful halt of the sensors (includes things like saving the bsec state to eeprom for BME680 sensors). You need to restart the MCU to resume normal execution
+- `mhz19 calibrate` issue a "zero calibration" command for the MH-Z19 which calibrates the current reading as 400ppm
+- `bme680 save` forces immediate saving of the bsec state to EEPROM (normally this happens at stop, restart, and automatically every 7 days)
+
 ## Pin assignment
 
 | Device | Device pin | NodeMCU pin label | ESP8266 pin |
@@ -99,6 +117,8 @@ Basic steps:
   - `bool enabled` whether this sensor is enabled and setup has finished
   - `setup()` which will check the passed config and either configure the physical sensor and at the end flip the `enabled` boolean to true or, call `unpublishHomeassistant()`
   - `loop()` which will do whatever operations are required for the sensor. This is called rapidly since some sensors have their own timing constraints so each handler should have its own throttle implementation to adjust the interval of measurements. When updating measurements, the loop function should first publish the state data and then call `publishHomeassistant()`
+  - `stop()` optionally, which will do any "controlled stopping", such as writing the current bsec state to EEPROM for BME680
+  - `command()` optionally, which will handle any sensor specific commands, such as "mhz19 calibrate" would call "calibrate" command for the MH-Z19 handler
   - `publishHomeassistant()` which will publish the MQTT discovery topics for the data
   - `unpublishHomeassistant()` which will publish an empty message for the same topics as publish, this is used to remove entities from HA when they are removed from the HomeMCU config
 - Each sensor should use its own MQTT topic to prevent collisions:

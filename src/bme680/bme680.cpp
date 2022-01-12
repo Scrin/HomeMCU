@@ -96,7 +96,30 @@ void BME680::loop()
       HomeMCU::client.publish(topic, msg.c_str());
     }
     publishHomeassistant();
-    updateState();
+    uint64_t now = Utils::uptime();
+    if (lastSave + STATE_SAVE_PERIOD < now)
+    {
+      lastSave = now;
+      saveState();
+    }
+  }
+}
+
+void BME680::stop()
+{
+  saveState();
+}
+
+void BME680::command(const char *cmd)
+{
+  if (strcmp(cmd, "save") == 0)
+  {
+    Log::info("Saving bsec state");
+    saveState();
+  }
+  else
+  {
+    Log::error("Unknown " + String(BME680::type) + " command: " + cmd);
   }
 }
 
@@ -130,27 +153,23 @@ void BME680::loadState()
   }
 }
 
-void BME680::updateState()
+void BME680::saveState()
 {
-  if ((stateUpdateCounter * STATE_SAVE_PERIOD) < Utils::uptime() && iaqSensor.iaqAccuracy >= 3)
+  iaqSensor.getState(bsecState);
+
+  Log::info("Writing state to EEPROM");
+
+  for (uint8_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
   {
-    stateUpdateCounter++;
-    iaqSensor.getState(bsecState);
-
-    Log::info("Writing state to EEPROM");
-
-    for (uint8_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
-    {
-      EEPROM.write(i + 1, bsecState[i]);
-    }
-
-    EEPROM.write(0, BSEC_MAX_STATE_BLOB_SIZE);
-    EEPROM.commit();
-
-    char str[BSEC_MAX_STATE_BLOB_SIZE * 2 + 1];
-    str[BSEC_MAX_STATE_BLOB_SIZE * 2] = 0;
-    for (size_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
-      sprintf(&str[2 * i], "%02X", bsecState[i]);
-    Log::debug("bsec state saved: " + String(str));
+    EEPROM.write(i + 1, bsecState[i]);
   }
+
+  EEPROM.write(0, BSEC_MAX_STATE_BLOB_SIZE);
+  EEPROM.commit();
+
+  char str[BSEC_MAX_STATE_BLOB_SIZE * 2 + 1];
+  str[BSEC_MAX_STATE_BLOB_SIZE * 2] = 0;
+  for (size_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
+    sprintf(&str[2 * i], "%02X", bsecState[i]);
+  Log::debug("bsec state saved: " + String(str));
 }

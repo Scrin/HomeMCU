@@ -21,6 +21,7 @@ void MHZ19::setup(JsonObject config)
     this->name = HomeMCU::name;
   }
   Utils::getStateTopic(this->topic, MHZ19::type);
+  sensor.setAutoCalibration(false);
   enabled = true;
 }
 
@@ -65,4 +66,17 @@ void MHZ19::loop()
   serializeJson(json, msg);
   HomeMCU::client.publish(topic, msg.c_str());
   publishHomeassistant(m.state);
+}
+
+void MHZ19::command(const char *cmd)
+{
+  if (strcmp(cmd, "calibrate") == 0)
+  {
+    Log::info("Calibrating MH-Z19 level to 400 ppm");
+    sensor.calibrateZero();
+  }
+  else
+  {
+    Log::error("Unknown " + String(MHZ19::type) + " command: " + cmd);
+  }
 }

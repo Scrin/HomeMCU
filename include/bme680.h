@@ -6,7 +6,7 @@
 #include <EEPROM.h>
 #include "bsec.h"
 
-#define STATE_SAVE_PERIOD UINT64_C(12 * 60 * 60 * 1000) // 12h
+#define STATE_SAVE_PERIOD UINT64_C(7 * 24 * 60 * 60 * 1000) // 7 days
 
 class BME680
 {
@@ -16,6 +16,8 @@ public:
 
   void setup(JsonObject config);
   void loop();
+  void stop();
+  void command(const char *cmd);
 
 private:
   char *name;
@@ -23,12 +25,12 @@ private:
 
   Bsec iaqSensor;
   uint8_t bsecState[BSEC_MAX_STATE_BLOB_SIZE] = {0};
-  uint64_t stateUpdateCounter = 1;
+  uint64_t lastSave = 0;
 
   void publishHomeassistant();
   void unpublishHomeassistant();
   void loadState();
-  void updateState();
+  void saveState();
 };
 
 #endif

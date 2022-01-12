@@ -12,6 +12,7 @@ public:
 
   void setup(JsonObject config);
   void loop();
+  void command(const char *cmd);
 
 private:
   char *name;

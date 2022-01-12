@@ -11,7 +11,7 @@ ESP8266HTTPUpdateServer httpUpdater;
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(74880);
   while (!Serial)
     ;
   Serial.print("\nConnecting");
