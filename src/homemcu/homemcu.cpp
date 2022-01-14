@@ -10,9 +10,6 @@ char *HomeMCU::name = strdup(WiFi.macAddress().c_str());
 WiFiClient espClient;
 PubSubClient HomeMCU::client = PubSubClient(espClient);
 
-MHZ19 mhz19;
-BME680 bme680;
-
 bool stopped = false;
 bool stopping = false;
 bool restarting = false;
@@ -21,30 +18,24 @@ uint32_t HomeMCU::currentConfigChecksum = 0;
 char HomeMCU::statusTopic[MQTT_MAX_TOPIC_LENGTH];
 char configTopic[MQTT_MAX_TOPIC_LENGTH];
 char commandTopic[MQTT_MAX_TOPIC_LENGTH];
+char deviceCommandTopicPrefix[MQTT_MAX_TOPIC_LENGTH];
 
 uint64_t lastStatusUpdateLog = 0;
 uint64_t lastStatusUpdateMqtt = 0;
 
-void handleSensors()
-{
-  if (mhz19.enabled)
-    mhz19.loop();
-
-  if (bme680.enabled)
-    bme680.loop();
-}
-
-void handleStop()
-{
-  if (bme680.enabled)
-    bme680.stop();
-}
+// devices.cpp
+void setupDevices(JsonDocument &json);
+void loopDevices();
+void stopDevices();
+void setDeviceStates(JsonDocument &json);
+void handleDeviceCommand(char *device, char *charPayload);
 
 void HomeMCU::setup()
 {
   Utils::getStateTopic(statusTopic, "status");
   Utils::getStateTopic(configTopic, "config");
   Utils::getStateTopic(commandTopic, "command");
+  Utils::getStateTopic(deviceCommandTopicPrefix, "command/");
 
   client.setServer(MQTT_SERVER, MQTT_PORT);
   client.setCallback(mqttCallback);
@@ -57,7 +48,7 @@ void HomeMCU::loop()
   if (restarting)
   {
     updateState(); // update status to "restarting"
-    handleStop();
+    stopDevices();
     client.loop(); // process the outbound mqtt message(s) immediately
     delay(100);    // wait for the underlying network stack to actually send the data
     ESP.restart();
@@ -67,7 +58,7 @@ void HomeMCU::loop()
   {
     updateState(); // update status to "stopping"
     client.loop(); // process the outbound mqtt message(s) immediately
-    handleStop();
+    stopDevices();
     stopping = false;
     stopped = true;
     updateState(); // update status to "stopped"
@@ -79,7 +70,7 @@ void HomeMCU::loop()
 
   if (!stopped)
   {
-    handleSensors();
+    loopDevices();
   }
 
   uint64_t now = Utils::uptime();
@@ -122,8 +113,7 @@ void HomeMCU::updateState()
   json["mac"] = WiFi.macAddress();
   if (configLoaded)
   {
-    json[MHZ19::type] = mhz19.enabled;
-    json[BME680::type] = bme680.enabled;
+    setDeviceStates(json);
     json["config_checksum"] = currentConfigChecksum;
   }
   json["build_ts"] = BUILD_TIMESTAMP;
@@ -137,7 +127,7 @@ void HomeMCU::updateState()
 void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
 {
   uint32_t checksum = CRC32::calculate(payload, length);
-  Log::info("Message arrived at " + String(topic) + " with checksum " + String(checksum));
+  Log::debug("Message arrived at " + String(topic) + " with checksum " + String(checksum));
 
   if (strcmp(topic, configTopic) == 0)
   {
@@ -170,8 +160,7 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
       HomeMCU::name = strdup(json["name"]);
     }
 
-    mhz19.setup(json[MHZ19::type]);
-    bme680.setup(json[BME680::type]);
+    setupDevices(json);
 
     configLoaded = true;
     currentConfigChecksum = checksum;
@@ -203,22 +192,23 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
       Log::info("Got stop command");
       stopping = true;
     }
-    else if (strncmp(MHZ19::type, charPayload, strlen(MHZ19::type)) == 0 && charPayload[strlen(MHZ19::type)] == ' ')
-    {
-      const char *msg = &charPayload[strlen(MHZ19::type) + 1];
-      Log::info("Got " + String(MHZ19::type) + " command: " + msg);
-      mhz19.command(msg);
-    }
-    else if (strncmp(BME680::type, charPayload, strlen(BME680::type)) == 0 && charPayload[strlen(BME680::type)] == ' ')
-    {
-      const char *msg = &charPayload[strlen(BME680::type) + 1];
-      Log::info("Got " + String(BME680::type) + " command: " + msg);
-      bme680.command(msg);
-    }
     else
     {
       Log::warn("Got unknown command: " + String(charPayload));
     }
+  }
+  else if (strncmp(deviceCommandTopicPrefix, topic, strlen(deviceCommandTopicPrefix)) == 0)
+  {
+    if (length > MAX_COMMAND_LENGTH)
+    {
+      Log::error("Command length exceeded the maximum");
+      return;
+    }
+    char charPayload[MAX_COMMAND_LENGTH + 1];
+    unsigned int len = min(static_cast<unsigned int>(sizeof(charPayload)), length);
+    memcpy(charPayload, payload, len);
+    charPayload[len] = '\0';
+    handleDeviceCommand(&topic[strlen(deviceCommandTopicPrefix)], charPayload);
   }
 }
 
@@ -238,8 +228,11 @@ void HomeMCU::checkConnection()
       if (client.connect(WiFi.macAddress().c_str(), MQTT_USERNAME, MQTT_PASSWORD, statusTopic, 0, true, "{\"status\":\"offline\"}"))
       {
         Log::info("MQTT connected");
+        char deviceCommandTopic[MQTT_MAX_TOPIC_LENGTH];
+        Utils::getStateTopic(deviceCommandTopic, "command/+");
         client.subscribe(configTopic);
         client.subscribe(commandTopic);
+        client.subscribe(deviceCommandTopic);
         updateState();
       }
       else

@@ -28,7 +28,6 @@ private:
   uint64_t lastSave = 0;
 
   void publishHomeassistant();
-  void unpublishHomeassistant();
   void loadState();
   void saveState();
 };

@@ -7,6 +7,11 @@ void Utils::getStateTopic(char *topic, const char *type)
   snprintf(topic, MQTT_MAX_TOPIC_LENGTH, MQTT_PREFIX "%s/%s", WiFi.macAddress().c_str(), type);
 }
 
+void Utils::getCommandTopic(char *topic, const char *type)
+{
+  snprintf(topic, MQTT_MAX_TOPIC_LENGTH, MQTT_PREFIX "%s/command/%s", WiFi.macAddress().c_str(), type);
+}
+
 void Utils::getDiscoveryTopic(char *topic, const char *component, const char *type, const char *field, const char *topicType)
 {
   uint8_t mac[6];
@@ -37,4 +42,21 @@ uint64_t Utils::uptime()
   lastMillis = millisLow;
 
   return ((uint64_t)millisHigh << 32) + millisLow;
+}
+
+int Utils::char2int(char input)
+{
+  if (input >= '0' && input <= '9')
+  {
+    return input - '0';
+  }
+  if (input >= 'A' && input <= 'F')
+  {
+    return input - 'A' + 10;
+  }
+  if (input >= 'a' && input <= 'f')
+  {
+    return input - 'a' + 10;
+  }
+  return 0;
 }

@@ -6,7 +6,7 @@ void MHZ19::setup(JsonObject config)
 {
   if (!config["enabled"])
   {
-    unpublishHomeassistant();
+    publishHomeassistant();
     Log::info("mhz19 disabled");
     return;
   }
@@ -33,6 +33,7 @@ void MHZ19::loop()
   lastUpdate = now;
 
   measurement_t m = sensor.getMeasurement();
+  sensorState = m.state;
 
   if (!sensorReady)
   {
@@ -64,7 +65,7 @@ void MHZ19::loop()
   String msg;
   serializeJson(json, msg);
   HomeMCU::client.publish(topic, msg.c_str());
-  publishHomeassistant(m.state);
+  publishHomeassistant();
 }
 
 void MHZ19::command(const char *cmd)

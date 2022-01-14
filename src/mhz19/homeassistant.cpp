@@ -1,12 +1,12 @@
 #include "mhz19.h"
 
-void MHZ19::publishHomeassistant(int sensorState)
+void MHZ19::publishHomeassistant()
 {
   std::map<String, String> attrs;
   attrs["sensor_state"] = String(sensorState);
   {
-    HomeMCU::DiscoveryData data = {
-        .component = "sensor",
+    HomeMCU::SensorDiscoveryData data = {
+        .enabled = enabled,
         .type = MHZ19::type,
         .field = "co2",
         .stateTopic = topic,
@@ -21,8 +21,8 @@ void MHZ19::publishHomeassistant(int sensorState)
     HomeMCU::updateDiscovery(data);
   }
   {
-    HomeMCU::DiscoveryData data = {
-        .component = "sensor",
+    HomeMCU::SensorDiscoveryData data = {
+        .enabled = enabled,
         .type = MHZ19::type,
         .field = "temperature",
         .stateTopic = topic,
@@ -36,10 +36,4 @@ void MHZ19::publishHomeassistant(int sensorState)
         .attributes = attrs};
     HomeMCU::updateDiscovery(data);
   }
-}
-
-void MHZ19::unpublishHomeassistant()
-{
-  HomeMCU::deleteDiscovery("sensor", MHZ19::type, "co2");
-  HomeMCU::deleteDiscovery("sensor", MHZ19::type, "temperature");
 }

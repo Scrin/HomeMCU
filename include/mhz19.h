@@ -20,10 +20,10 @@ private:
 
   MHZ19_sensor sensor = MHZ19_sensor(13, 15);
   bool sensorReady = false;
+  int sensorState = -1;
   uint64_t lastUpdate = 0;
 
-  void publishHomeassistant(int sensorState);
-  void unpublishHomeassistant();
+  void publishHomeassistant();
 };
 
 #endif

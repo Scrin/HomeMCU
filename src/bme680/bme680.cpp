@@ -14,7 +14,7 @@ void BME680::setup(JsonObject config)
 {
   if (!config["enabled"])
   {
-    unpublishHomeassistant();
+    publishHomeassistant();
     Log::info("bme680 disabled");
     return;
   }

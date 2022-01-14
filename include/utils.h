@@ -8,9 +8,17 @@ namespace Utils
    * @brief Gets the MQTT topic for states
    * 
    * @param topic pointer where to store the topic, capped at MQTT_MAX_TOPIC_LENGTH
-   * @param type type of the state, typically type of the sensor such as "mhz19" or "bme680"
+   * @param type type of the state, typically type of the device such as "mhz19" or "bme680"
    */
   void getStateTopic(char *topic, const char *type);
+
+  /**
+   * @brief Get the MQTT topic for device commands
+   * 
+   * @param topic pointer where to store the topic, capped at MQTT_MAX_TOPIC_LENGTH
+   * @param type type of the device
+   */
+  void getCommandTopic(char *topic, const char *type);
 
   /** 
    * @brief Gets the MQTT topic for Home Assistant MQTT Discovery
@@ -38,6 +46,14 @@ namespace Utils
  * @return int64_t the current uptime in milliseconds.
  */
   uint64_t uptime();
+
+  /**
+   * @brief Converts a hex char to int
+   * 
+   * @param input a hex char
+   * @return int the numeric value of the char
+   */
+  int char2int(char input);
 };
 
 #endif
