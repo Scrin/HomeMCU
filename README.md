@@ -6,6 +6,7 @@ HomeMCU is a firmware for a ESP8266 based NodeMCU with support for a few differe
 
 - Bosch BME680 (temperature, humidity, air pressure, indoor air quality index, voc, etc)
 - MH-Z19 Carbon dioxide sensor
+- Addressable RGBW led strip
 
 ## Setup
 
