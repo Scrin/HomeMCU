@@ -8,7 +8,6 @@ namespace HomeMCU
   // Data for creating Home Assistant MQTT Discovery messages for sensor entities. Optional fields can be omitted with nullptr
   struct SensorDiscoveryData
   {
-    bool enabled;                         // Required. If true, the entity will be created in HA, if false, the device will be removed from HA
     const char *type;                     // Required. Device type of the state, use the Class::type when setting this
     const char *field;                    // Required. Field name as it appears in the state json
     const char *stateTopic;               // Required. State topic
@@ -24,7 +23,6 @@ namespace HomeMCU
   // Data for creating Home Assistant MQTT Discovery messages for light entities. Optional fields can be omitted with nullptr
   struct LightDiscoveryData
   {
-    bool enabled;                         // Required. If true, the entity will be created in HA, if false, the device will be removed from HA
     const char *type;                     // Required. Device type of the state, use the Class::type when setting this
     const char *field;                    // Required. Field name as it appears in the state json
     const char *stateTopic;               // Required. State topic
@@ -32,14 +30,12 @@ namespace HomeMCU
     const char *fieldName;                // Required. Human friendly name of the sensor reading
     const char *deviceClass;              // Optional. One of the supported device classes for the used HA MQTT component
     const char *icon;                     // Optional. Icon for the entity
-    const char *colorMode;                // Optional. Sets the supported color mode for a light
     const char *commandTopic;             // Optional. Sets the command topic
     std::map<String, String> &attributes; // Required, but can be empty. Additional attributes for the entity attributes
   };
   // Data for creating Home Assistant MQTT Discovery messages for number input entities. Optional fields can be omitted with nullptr
   struct NumberDiscoveryData
   {
-    bool enabled;                         // Required. If true, the entity will be created in HA, if false, the device will be removed from HA
     const char *type;                     // Required. Device type of the state, use the Class::type when setting this
     const char *field;                    // Required. Field name as it appears in the state json
     const char *stateTopic;               // Required. State topic
@@ -47,6 +43,7 @@ namespace HomeMCU
     const char *fieldName;                // Required. Human friendly name of the sensor reading
     int min;                              // Required. Minimum value
     int max;                              // Required. Maximum value
+    int step;                             // Required. Stepping for the value
     const char *unitOfMeasurement;        // Optional. Unit of measurement. Note that HA will only show a line graph when unit of measurement is specified
     const char *icon;                     // Optional. Icon for the entity
     const char *commandTopic;             // Optional. Sets the command topic
@@ -58,7 +55,6 @@ namespace HomeMCU
   // Data for creating Home Assistant MQTT Discovery messages for select input entities. Optional fields can be omitted with nullptr
   struct SelectDiscoveryData
   {
-    bool enabled;                         // Required. If true, the entity will be created in HA, if false, the device will be removed from HA
     const char *type;                     // Required. Device type of the state, use the Class::type when setting this
     const char *field;                    // Required. Field name as it appears in the state json
     const char *stateTopic;               // Required. State topic
@@ -88,6 +84,7 @@ namespace HomeMCU
   void updateDiscovery(LightDiscoveryData &data);
   void updateDiscovery(NumberDiscoveryData &data);
   void updateDiscovery(SelectDiscoveryData &data);
+  void deleteDiscovery(const char *deviceclass, const char *type, const char *field);
 };
 
 #endif

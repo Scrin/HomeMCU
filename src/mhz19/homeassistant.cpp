@@ -6,7 +6,6 @@ void MHZ19::publishHomeassistant()
   attrs["sensor_state"] = String(sensorState);
   {
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = MHZ19::type,
         .field = "co2",
         .stateTopic = topic,
@@ -22,7 +21,6 @@ void MHZ19::publishHomeassistant()
   }
   {
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = MHZ19::type,
         .field = "temperature",
         .stateTopic = topic,
@@ -36,4 +34,10 @@ void MHZ19::publishHomeassistant()
         .attributes = attrs};
     HomeMCU::updateDiscovery(data);
   }
+}
+
+void MHZ19::unpublishHomeassistant()
+{
+  HomeMCU::deleteDiscovery("sensor", MHZ19::type, "co2");
+  HomeMCU::deleteDiscovery("sensor", MHZ19::type, "temperature");
 }

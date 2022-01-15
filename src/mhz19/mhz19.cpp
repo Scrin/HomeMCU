@@ -2,11 +2,11 @@
 
 const char *MHZ19::type = "mhz19";
 
-void MHZ19::setup(JsonObject config)
+MHZ19::MHZ19(JsonObject &config)
 {
   if (!config["enabled"])
   {
-    publishHomeassistant();
+    // publishHomeassistant();
     Log::info("mhz19 disabled");
     return;
   }
@@ -18,10 +18,14 @@ void MHZ19::setup(JsonObject config)
   }
   else
   {
-    this->name = HomeMCU::name;
+    this->name = strdup(HomeMCU::name);
   }
   Utils::getStateTopic(this->topic, MHZ19::type);
-  enabled = true;
+}
+
+MHZ19::~MHZ19()
+{
+  free(name);
 }
 
 void MHZ19::loop()
@@ -64,7 +68,7 @@ void MHZ19::loop()
 
   String msg;
   serializeJson(json, msg);
-  HomeMCU::client.publish(topic, msg.c_str());
+  HomeMCU::client.publish(topic, msg.c_str(), true);
   publishHomeassistant();
 }
 

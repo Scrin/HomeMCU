@@ -8,11 +8,13 @@ class MHZ19
 {
 public:
   static const char *type;
-  bool enabled = false;
 
-  void setup(JsonObject config);
+  MHZ19(JsonObject &config);
+  ~MHZ19();
+
   void loop();
   void command(const char *cmd);
+  static void unpublishHomeassistant();
 
 private:
   char *name;

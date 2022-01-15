@@ -10,11 +10,11 @@ const uint8_t bsecConfigStatic[] = {
 #include "config/generic_33v_3s_28d/bsec_iaq.txt"
 };
 
-void BME680::setup(JsonObject config)
+BME680::BME680(JsonObject &config)
 {
   if (!config["enabled"])
   {
-    publishHomeassistant();
+    // publishHomeassistant();
     Log::info("bme680 disabled");
     return;
   }
@@ -27,7 +27,7 @@ void BME680::setup(JsonObject config)
   }
   else
   {
-    this->name = HomeMCU::name;
+    this->name = strdup(HomeMCU::name);
   }
   Utils::getStateTopic(this->topic, BME680::type);
 
@@ -58,7 +58,12 @@ void BME680::setup(JsonObject config)
   };
 
   iaqSensor.updateSubscription(outputs.data(), outputs.size(), BSEC_SAMPLE_RATE_LP);
-  enabled = true;
+}
+
+BME680::~BME680()
+{
+  saveState();
+  free(name);
 }
 
 void BME680::loop()
@@ -93,7 +98,7 @@ void BME680::loop()
 
       String msg;
       serializeJson(json, msg);
-      HomeMCU::client.publish(topic, msg.c_str());
+      HomeMCU::client.publish(topic, msg.c_str(), true);
     }
     publishHomeassistant();
     uint64_t now = Utils::uptime();
@@ -103,11 +108,6 @@ void BME680::loop()
       saveState();
     }
   }
-}
-
-void BME680::stop()
-{
-  saveState();
 }
 
 void BME680::command(const char *cmd)

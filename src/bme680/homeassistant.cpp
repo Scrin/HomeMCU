@@ -10,7 +10,6 @@ void BME680::publishHomeassistant()
 
   {
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "temperature",
         .stateTopic = topic,
@@ -26,7 +25,6 @@ void BME680::publishHomeassistant()
   }
   {
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "humidity",
         .stateTopic = topic,
@@ -42,7 +40,6 @@ void BME680::publishHomeassistant()
   }
   {
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "pressure",
         .stateTopic = topic,
@@ -60,7 +57,6 @@ void BME680::publishHomeassistant()
     std::map<String, String> attrs(commonAttrs);
     attrs["iaq_accuracy"] = String(iaqSensor.iaqAccuracy);
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "iaq",
         .stateTopic = topic,
@@ -78,7 +74,6 @@ void BME680::publishHomeassistant()
     std::map<String, String> attrs(commonAttrs);
     attrs["static_iaq_accuracy"] = String(iaqSensor.staticIaqAccuracy);
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "staticIaq",
         .stateTopic = topic,
@@ -96,7 +91,6 @@ void BME680::publishHomeassistant()
     std::map<String, String> attrs(commonAttrs);
     attrs["co2_equivalent_accuracy"] = String(iaqSensor.co2Accuracy);
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "co2Equivalent",
         .stateTopic = topic,
@@ -114,7 +108,6 @@ void BME680::publishHomeassistant()
     std::map<String, String> attrs(commonAttrs);
     attrs["bvoc_equivalent_accuracy"] = String(iaqSensor.breathVocAccuracy);
     HomeMCU::SensorDiscoveryData data = {
-        .enabled = enabled,
         .type = BME680::type,
         .field = "breathVocEquivalent",
         .stateTopic = topic,
@@ -128,4 +121,15 @@ void BME680::publishHomeassistant()
         .attributes = attrs};
     HomeMCU::updateDiscovery(data);
   }
+}
+
+void BME680::unpublishHomeassistant()
+{
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "temperature");
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "humidity");
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "pressure");
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "iaq");
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "staticIaq");
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "co2Equivalent");
+  HomeMCU::deleteDiscovery("sensor", BME680::type, "breathVocEquivalent");
 }

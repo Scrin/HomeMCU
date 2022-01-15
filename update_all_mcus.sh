@@ -14,6 +14,7 @@ command -v mosquitto_pub >/dev/null 2>&1 || { echo >&2 "'mosquitto_pub' is requi
 command -v mosquitto_sub >/dev/null 2>&1 || { echo >&2 "'mosquitto_sub' is required but not found"; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "'curl' is required but not found"; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo >&2 "'jq' is required but not found"; exit 1; }
+command -v egrep >/dev/null 2>&1 || { echo >&2 "'egrep' is required but not found"; exit 1; }
 
 function process() {
   IP="$(echo "$MCU_STATUS" | jq -r .ip)"
@@ -30,6 +31,6 @@ echo "Connecting to $MQTT_HOST and waiting for messages on HomeMCU/+/status"
 
 while read -r MCU_STATUS; do
     process
-done <<< "$(mosquitto_sub -h "$MQTT_HOST" -t HomeMCU/+/status --retained-only)"
+done <<< "$(mosquitto_sub -h "$MQTT_HOST" -t HomeMCU/+/status --retained-only | egrep -v '^{"status":"offline"')"
 
 echo "All done!"

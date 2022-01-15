@@ -12,12 +12,13 @@ class BME680
 {
 public:
   static const char *type;
-  bool enabled = false;
 
-  void setup(JsonObject config);
+  BME680(JsonObject &config);
+  ~BME680();
+
   void loop();
-  void stop();
   void command(const char *cmd);
+  static void unpublishHomeassistant();
 
 private:
   char *name;

@@ -2,11 +2,11 @@
 
 const char *Ledstrip::type = "ledstrip";
 
-void Ledstrip::setup(JsonObject config)
+Ledstrip::Ledstrip(JsonObject &config)
 {
   if (!config["enabled"])
   {
-    publishHomeassistant();
+    // publishHomeassistant();
     Log::info("ledstrip disabled");
     return;
   }
@@ -18,7 +18,7 @@ void Ledstrip::setup(JsonObject config)
   }
   else
   {
-    this->name = HomeMCU::name;
+    this->name = strdup(HomeMCU::name);
   }
 
   ledCount = config["led_count"];
@@ -43,7 +43,19 @@ void Ledstrip::setup(JsonObject config)
 
   strip->Begin();
   strip->Show();
-  enabled = true;
+}
+
+Ledstrip::~Ledstrip()
+{
+  for (int i = 0; i < ledCount; i++)
+  {
+    strip->SetPixelColor(i, RgbwColor(0, 0, 0, 0));
+  }
+  strip->Show();
+  while (!strip->CanShow())
+    yield();
+  delete strip;
+  free(name);
 }
 
 void Ledstrip::loop()
@@ -145,19 +157,16 @@ void Ledstrip::loop()
 
   String msg;
   serializeJson(json, msg);
-  HomeMCU::client.publish(topic, msg.c_str());
+  HomeMCU::client.publish(topic, msg.c_str(), true);
   publishHomeassistant();
   stateDirty = false;
 }
 
-void Ledstrip::stop()
+void Ledstrip::state(const char *state)
 {
-  for (int i = 0; i < ledCount; i++)
+  if (!stateRestored)
   {
-    strip->SetPixelColor(i, RgbwColor(0, 0, 0, 0));
+    command(state);
+    stateRestored = true;
   }
-  strip->Show();
-  while (!strip->CanShow())
-    yield();
-  delete strip;
 }

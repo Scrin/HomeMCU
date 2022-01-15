@@ -4,9 +4,9 @@
 #include "bme680.h"
 #include "ledstrip.h"
 
-MHZ19 mhz19;
-BME680 bme680;
-Ledstrip ledstrip;
+MHZ19 *mhz19 = nullptr;
+BME680 *bme680 = nullptr;
+Ledstrip *ledstrip = nullptr;
 
 /**
  * @brief Set up devices. This is called once a config is received
@@ -15,9 +15,27 @@ Ledstrip ledstrip;
  */
 void setupDevices(JsonDocument &json)
 {
-  mhz19.setup(json[MHZ19::type]);
-  bme680.setup(json[BME680::type]);
-  ledstrip.setup(json[Ledstrip::type]);
+  {
+    JsonObject config = json[MHZ19::type];
+    if (config["enabled"])
+      mhz19 = new MHZ19(config);
+    else
+      MHZ19::unpublishHomeassistant();
+  }
+  {
+    JsonObject config = json[BME680::type];
+    if (config["enabled"])
+      bme680 = new BME680(config);
+    else
+      BME680::unpublishHomeassistant();
+  }
+  {
+    JsonObject config = json[Ledstrip::type];
+    if (config["enabled"])
+      ledstrip = new Ledstrip(config);
+    else
+      Ledstrip::unpublishHomeassistant();
+  }
 }
 
 /**
@@ -25,27 +43,27 @@ void setupDevices(JsonDocument &json)
  */
 void loopDevices()
 {
-  if (mhz19.enabled)
-    mhz19.loop();
+  if (mhz19)
+    mhz19->loop();
 
-  if (bme680.enabled)
-    bme680.loop();
+  if (bme680)
+    bme680->loop();
 
-  if (ledstrip.enabled)
-    ledstrip.loop();
+  if (ledstrip)
+    ledstrip->loop();
 }
 
 /**
  * @brief This is called when the MCU enters a stop state, such as pending a restart. 
- * This is used to do a "graceful stop" to devices, such as saving the bsec state to EEPROM on the BME680
  */
 void stopDevices()
 {
-  if (bme680.enabled)
-    bme680.stop();
-
-  if (ledstrip.enabled)
-    ledstrip.stop();
+  delete mhz19;
+  mhz19 = nullptr;
+  delete bme680;
+  bme680 = nullptr;
+  delete ledstrip;
+  ledstrip = nullptr;
 }
 
 /**
@@ -55,9 +73,12 @@ void stopDevices()
  */
 void setDeviceStates(JsonDocument &json)
 {
-  json[MHZ19::type] = mhz19.enabled;
-  json[BME680::type] = bme680.enabled;
-  json[Ledstrip::type] = ledstrip.enabled;
+  if (mhz19)
+    json[MHZ19::type] = true;
+  if (bme680)
+    json[BME680::type] = true;
+  if (ledstrip)
+    json[Ledstrip::type] = true;
 }
 
 /**
@@ -68,23 +89,33 @@ void setDeviceStates(JsonDocument &json)
  */
 void handleDeviceCommand(char *device, char *charPayload)
 {
-  if (strcmp(MHZ19::type, device) == 0)
+  if (strcmp(MHZ19::type, device) == 0 && mhz19)
   {
     Log::debug("Got " + String(MHZ19::type) + " command: " + charPayload);
-    mhz19.command(charPayload);
+    mhz19->command(charPayload);
   }
-  else if (strcmp(BME680::type, device) == 0)
+  else if (strcmp(BME680::type, device) == 0 && bme680)
   {
     Log::debug("Got " + String(BME680::type) + " command: " + charPayload);
-    bme680.command(charPayload);
+    bme680->command(charPayload);
   }
-  else if (strcmp(Ledstrip::type, device) == 0)
+  else if (strcmp(Ledstrip::type, device) == 0 && ledstrip)
   {
     Log::debug("Got " + String(Ledstrip::type) + " command: " + charPayload);
-    ledstrip.command(charPayload);
+    ledstrip->command(charPayload);
   }
-  else
+}
+
+/**
+ * @brief Handle device states, can be used for restoring the state after a reboot
+ * 
+ * @param device devicetype this state is intended for
+ * @param charPayload the state payload itself
+ */
+void handleDeviceState(char *device, char *charPayload)
+{
+  if (strcmp(Ledstrip::type, device) == 0 && ledstrip)
   {
-    Log::warn("Got unknown device command for " + String(device) + ": " + String(charPayload));
+    ledstrip->state(charPayload);
   }
 }

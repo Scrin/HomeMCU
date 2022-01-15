@@ -11,13 +11,6 @@ void HomeMCU::updateDiscovery(SensorDiscoveryData &data)
   Utils::getDiscoveryTopic(attributesTopic, "sensor", data.type, data.field, "attributes");
   Utils::getUniqueID(id, data.type, data.field);
 
-  if (!data.enabled)
-  {
-    HomeMCU::client.publish(configTopic, "");
-    HomeMCU::client.publish(attributesTopic, "");
-    return;
-  }
-
   { // attributes
     DynamicJsonDocument json(2048);
     json["mcu_name"] = HomeMCU::name;
@@ -31,7 +24,7 @@ void HomeMCU::updateDiscovery(SensorDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(attributesTopic, msg.c_str());
+    HomeMCU::client.publish(attributesTopic, msg.c_str(), true);
   }
   { // discovery
     char name[256];
@@ -63,7 +56,7 @@ void HomeMCU::updateDiscovery(SensorDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(configTopic, msg.c_str());
+    HomeMCU::client.publish(configTopic, msg.c_str(), true);
   }
 }
 
@@ -75,13 +68,6 @@ void HomeMCU::updateDiscovery(LightDiscoveryData &data)
   Utils::getDiscoveryTopic(configTopic, "light", data.type, data.field, "config");
   Utils::getDiscoveryTopic(attributesTopic, "light", data.type, data.field, "attributes");
   Utils::getUniqueID(id, data.type, data.field);
-
-  if (!data.enabled)
-  {
-    HomeMCU::client.publish(configTopic, "");
-    HomeMCU::client.publish(attributesTopic, "");
-    return;
-  }
 
   { // attributes
     DynamicJsonDocument json(2048);
@@ -95,7 +81,7 @@ void HomeMCU::updateDiscovery(LightDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(attributesTopic, msg.c_str());
+    HomeMCU::client.publish(attributesTopic, msg.c_str(), true);
   }
   { // discovery
     char name[256];
@@ -117,22 +103,19 @@ void HomeMCU::updateDiscovery(LightDiscoveryData &data)
     if (data.commandTopic)
       json["command_topic"] = data.commandTopic;
 
-    if (data.colorMode)
-    {
-      json["schema"] = "json";
-      json["color_mode"] = true;
-      json["effect"] = true;
+    json["schema"] = "json";
+    json["color_mode"] = true;
+    json["effect"] = true;
 
-      JsonArray effects = json.createNestedArray("effect_list");
-      effects.add("stable");
-      effects.add("gradient");
-      effects.add("custom");
-      effects.add("sunrise");
-      effects.add("colorloop");
+    JsonArray effects = json.createNestedArray("effect_list");
+    effects.add("stable");
+    effects.add("gradient");
+    // effects.add("custom"); // TODO: properly support this feature
+    effects.add("sunrise");
+    effects.add("colorloop");
 
-      JsonArray colorModes = json.createNestedArray("supported_color_modes");
-      colorModes.add(data.colorMode);
-    }
+    JsonArray colorModes = json.createNestedArray("supported_color_modes");
+    colorModes.add("rgbw");
 
     JsonArray identifiers = json["device"].createNestedArray("identifiers");
     identifiers.add(WiFi.macAddress());
@@ -141,7 +124,7 @@ void HomeMCU::updateDiscovery(LightDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(configTopic, msg.c_str());
+    HomeMCU::client.publish(configTopic, msg.c_str(), true);
   }
 }
 
@@ -153,13 +136,6 @@ void HomeMCU::updateDiscovery(NumberDiscoveryData &data)
   Utils::getDiscoveryTopic(configTopic, "number", data.type, data.field, "config");
   Utils::getDiscoveryTopic(attributesTopic, "number", data.type, data.field, "attributes");
   Utils::getUniqueID(id, data.type, data.field);
-
-  if (!data.enabled)
-  {
-    HomeMCU::client.publish(configTopic, "");
-    HomeMCU::client.publish(attributesTopic, "");
-    return;
-  }
 
   { // attributes
     DynamicJsonDocument json(2048);
@@ -201,11 +177,9 @@ void HomeMCU::updateDiscovery(NumberDiscoveryData &data)
     if (data.commandTemplate)
       json["command_template"] = data.commandTemplate;
 
-    if (data.min)
-      json["min"] = data.min;
-
-    if (data.max)
-      json["max"] = data.max;
+    json["min"] = data.min;
+    json["max"] = data.max;
+    json["step"] = data.step;
 
     if (data.options)
     {
@@ -223,7 +197,7 @@ void HomeMCU::updateDiscovery(NumberDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(configTopic, msg.c_str());
+    HomeMCU::client.publish(configTopic, msg.c_str(), true);
   }
 }
 
@@ -235,13 +209,6 @@ void HomeMCU::updateDiscovery(SelectDiscoveryData &data)
   Utils::getDiscoveryTopic(configTopic, "select", data.type, data.field, "config");
   Utils::getDiscoveryTopic(attributesTopic, "select", data.type, data.field, "attributes");
   Utils::getUniqueID(id, data.type, data.field);
-
-  if (!data.enabled)
-  {
-    HomeMCU::client.publish(configTopic, "");
-    HomeMCU::client.publish(attributesTopic, "");
-    return;
-  }
 
   { // attributes
     DynamicJsonDocument json(2048);
@@ -255,7 +222,7 @@ void HomeMCU::updateDiscovery(SelectDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(attributesTopic, msg.c_str());
+    HomeMCU::client.publish(attributesTopic, msg.c_str(), true);
   }
   { // discovery
     char name[256];
@@ -297,6 +264,17 @@ void HomeMCU::updateDiscovery(SelectDiscoveryData &data)
 
     String msg;
     serializeJson(json, msg);
-    HomeMCU::client.publish(configTopic, msg.c_str());
+    HomeMCU::client.publish(configTopic, msg.c_str(), true);
   }
+}
+
+void HomeMCU::deleteDiscovery(const char *deviceclass, const char *type, const char *field)
+{
+  char configTopic[MQTT_MAX_TOPIC_LENGTH];
+  char attributesTopic[MQTT_MAX_TOPIC_LENGTH];
+  Utils::getDiscoveryTopic(configTopic, deviceclass, type, field, "config");
+  Utils::getDiscoveryTopic(attributesTopic, deviceclass, type, field, "attributes");
+
+  HomeMCU::client.publish(configTopic, "", true);
+  HomeMCU::client.publish(attributesTopic, "", true);
 }

@@ -72,10 +72,10 @@ All fields are optional. Field description:
 
 ## MQTT topics
 
-- `HomeMCU/<mac>/status` retained status topic set by the HomeMCU
-- `HomeMCU/<mac>/config` retained config topic set by the user for the HomeMCU
+- `HomeMCU/<mac>/status` status topic set by the HomeMCU
+- `HomeMCU/<mac>/config` config topic set by the user for the HomeMCU
 - `HomeMCU/<mac>/command` commands to send to the HomeMCU
-- `HomeMCU/<mac>/command/<device>` commands to send to the device
+- `HomeMCU/<mac>/command/<device>` commands to send to a device connected to the MCU
 - `HomeMCU/<mac>/<device>` device-specific state topic
 - `homeassistant/<component>/homemcu_<mac>_<device>_<field>/config` [MQTT Discovery topics](https://www.home-assistant.io/docs/mqtt/discovery/) for Home Assistant entities
 - `homeassistant/<component>/homemcu_<mac>_<device>_<field>/attributes` [json_attributes topic](https://www.home-assistant.io/integrations/sensor.mqtt/#json_attributes_topic) for Home Assistant entities
@@ -113,6 +113,7 @@ These can be sent to the device command topic. Note that these are processed onl
 | Ledstrip | Gnd        | G                 |             |
 
 _(1)_ VU if you use the usb socket to power the MCU, VIN if you feed external 5V
+
 _(2)_ Don't feed 5V to the strip through the NodeMCU, the leds will draw too much current for the NodeMCU to handle! Use an external power supply directly.
 
 ## Over The Air update
@@ -136,12 +137,10 @@ Basic steps:
   - If a configuration was previously loaded, instead reboot the MCU to ensure the new config is applied from a clean state
 - Each "device handler class" should have and do the following:
   - `static const char *type` which is the lowercase alphanumeric "devicetype", ie. "mhz19" for the MH-Z19 sensor
-  - `bool enabled` whether this device is enabled and setup has finished
-  - `setup()` which will check the passed config and either configure the physical device and at the end flip the `enabled` boolean to true or, call `publishHomeassistant()` to un-discover the entities from HA
   - `loop()` which will do whatever operations are required for the device. This is called rapidly since some devices have their own timing constraints so each handler should have its own throttle implementation to adjust the interval of measurements. When updating measurements, the loop function should first publish the state data and then call `publishHomeassistant()` if the attributes have changed
-  - `stop()` optionally, which will do any "controlled stopping", such as writing the current bsec state to EEPROM for BME680
   - `command()` optionally, which will handle any device specific commands, such "calibrate" command for the MH-Z19 handler
   - `publishHomeassistant()` which will publish the MQTT discovery topics for the data config
+  - `static unpublishHomeassistant()` which will publish blank MQTT discovery topics, thsi is used for removing entities from HA when a device is removed from the config
 - Each device should use its own MQTT topic to prevent collisions:
   - Actual measurement data: `HomeMCU/<mac>/<devicetype>`
   - HA discovery: `homeassistant/<component>/homemcu_<mac>_<devicetype>_<field>` (see [this](https://www.home-assistant.io/docs/mqtt/discovery/) for details)

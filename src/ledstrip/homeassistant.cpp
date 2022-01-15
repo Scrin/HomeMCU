@@ -6,7 +6,6 @@ void Ledstrip::publishHomeassistant()
   attrs["led_count"] = ledCount;
   {
     HomeMCU::LightDiscoveryData data = {
-        .enabled = enabled,
         .type = Ledstrip::type,
         .field = "leds",
         .stateTopic = topic,
@@ -14,7 +13,6 @@ void Ledstrip::publishHomeassistant()
         .fieldName = "Leds",
         .deviceClass = "light",
         .icon = nullptr,
-        .colorMode = "rgbw",
         .commandTopic = commandTopic,
         .attributes = attrs};
     HomeMCU::updateDiscovery(data);
@@ -26,7 +24,6 @@ void Ledstrip::publishHomeassistant()
     options.push_back("near");
     options.push_back("far");
     HomeMCU::SelectDiscoveryData data = {
-        .enabled = enabled,
         .type = Ledstrip::type,
         .field = "gradientmode",
         .stateTopic = topic,
@@ -42,7 +39,6 @@ void Ledstrip::publishHomeassistant()
   }
   {
     HomeMCU::NumberDiscoveryData data = {
-        .enabled = enabled,
         .type = Ledstrip::type,
         .field = "gradientextent",
         .stateTopic = topic,
@@ -50,6 +46,7 @@ void Ledstrip::publishHomeassistant()
         .fieldName = "Gradient extent",
         .min = 0,
         .max = 100,
+        .step = 1,
         .unitOfMeasurement = "%",
         .icon = nullptr,
         .commandTopic = commandTopic,
@@ -61,15 +58,15 @@ void Ledstrip::publishHomeassistant()
   }
   {
     HomeMCU::NumberDiscoveryData data = {
-        .enabled = enabled,
         .type = Ledstrip::type,
         .field = "sunriseduration",
         .stateTopic = topic,
         .name = name,
         .fieldName = "Sunrise duration",
-        .min = 1,
-        .max = 60,
-        .unitOfMeasurement = "minutes",
+        .min = 60,
+        .max = 3600,
+        .step = 60,
+        .unitOfMeasurement = "sec",
         .icon = nullptr,
         .commandTopic = commandTopic,
         .commandTemplate = "{\"sunrise_duration\":{{ value }}}",
@@ -78,4 +75,11 @@ void Ledstrip::publishHomeassistant()
         .attributes = attrs};
     HomeMCU::updateDiscovery(data);
   }
+}
+void Ledstrip::unpublishHomeassistant()
+{
+  HomeMCU::deleteDiscovery("light", Ledstrip::type, "leds");
+  HomeMCU::deleteDiscovery("select", Ledstrip::type, "gradientmode");
+  HomeMCU::deleteDiscovery("number", Ledstrip::type, "gradientextent");
+  HomeMCU::deleteDiscovery("number", Ledstrip::type, "sunriseduration");
 }

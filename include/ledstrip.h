@@ -9,12 +9,14 @@ class Ledstrip
 {
 public:
   static const char *type;
-  bool enabled = false;
 
-  void setup(JsonObject config);
+  Ledstrip(JsonObject &config);
+  ~Ledstrip();
+
   void loop();
-  void stop();
   void command(const char *cmd);
+  void state(const char *state);
+  static void unpublishHomeassistant();
 
 private:
   enum Effect
@@ -48,6 +50,7 @@ private:
   uint64_t transitionDuration = 0;
   bool dirty = true;
   bool stateDirty = true;
+  bool stateRestored = false;
 
   bool on = false;
   bool inTransition = false;
