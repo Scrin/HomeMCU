@@ -4,12 +4,6 @@ const char *MHZ19::type = "mhz19";
 
 MHZ19::MHZ19(JsonObject &config)
 {
-  if (!config["enabled"])
-  {
-    // publishHomeassistant();
-    Log::info("mhz19 disabled");
-    return;
-  }
   Log::info("mhz19 enabled");
   const char *name = config["name"];
   if (name != nullptr)

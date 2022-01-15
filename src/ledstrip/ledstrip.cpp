@@ -4,12 +4,6 @@ const char *Ledstrip::type = "ledstrip";
 
 Ledstrip::Ledstrip(JsonObject &config)
 {
-  if (!config["enabled"])
-  {
-    // publishHomeassistant();
-    Log::info("ledstrip disabled");
-    return;
-  }
   Log::info("ledstrip enabled");
   const char *name = config["name"];
   if (name != nullptr)

@@ -12,12 +12,6 @@ const uint8_t bsecConfigStatic[] = {
 
 BME680::BME680(JsonObject &config)
 {
-  if (!config["enabled"])
-  {
-    // publishHomeassistant();
-    Log::info("bme680 disabled");
-    return;
-  }
   Log::info("bme680 enabled");
   const char *name = config["name"];
   bool staticIaq = config["static_iaq"];
