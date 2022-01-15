@@ -94,7 +94,7 @@ These can be sent to the device command topic. Note that these are processed onl
 - `bme680` commands
   - `save` forces immediate saving of the bsec state to EEPROM (normally this happens at stop, restart, and automatically every 7 days)
 - `ledstrip` commands
-  - json, with HA MQTT light commands, including the custom features. For example `{"state":"ON","effect":"sunrise","sunrise_duration":30}` would trigger a 30 minute long sunrise effect for turning on the led strip
+  - json, with HA MQTT light commands, including the custom features. For example `{"state":"ON","effect":"sunrise","sunrise_duration":1800}` would trigger a 30 minute (=1800 seconds) long sunrise effect for turning on the led strip
 
 ## Pin assignment
 

@@ -141,7 +141,7 @@ void Ledstrip::loop()
   }
 
   json["gradient_extent"] = gradientExtent;
-  json["sunrise_duration"] = sunriseDuration / (60 * 1000);
+  json["sunrise_duration"] = sunriseDuration / 1000;
 
   String msg;
   serializeJson(json, msg);

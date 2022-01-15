@@ -171,7 +171,7 @@ void Ledstrip::command(const char *cmd)
   uint64_t sunrise = json["sunrise_duration"];
   if (sunrise > 0)
   {
-    sunriseDuration = sunrise * 60 * 1000;
+    sunriseDuration = sunrise * 1000;
   }
   dirty = true;
   stateDirty = true;
