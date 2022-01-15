@@ -71,14 +71,14 @@ void stopDevices()
  * 
  * @param json The state object
  */
-void setDeviceStates(JsonDocument &json)
+void setDeviceStates(JsonArray &arr)
 {
   if (mhz19)
-    json[MHZ19::type] = true;
+    arr.add(MHZ19::type);
   if (bme680)
-    json[BME680::type] = true;
+    arr.add(BME680::type);
   if (ledstrip)
-    json[Ledstrip::type] = true;
+    arr.add(Ledstrip::type);
 }
 
 /**

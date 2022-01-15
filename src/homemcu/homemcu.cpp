@@ -26,7 +26,7 @@ uint64_t lastStatusUpdateMqtt = 0;
 void setupDevices(JsonDocument &json);
 void loopDevices();
 void stopDevices();
-void setDeviceStates(JsonDocument &json);
+void setDeviceStates(JsonArray &arr);
 void handleDeviceCommand(char *device, char *charPayload);
 void handleDeviceState(char *device, char *charPayload);
 
@@ -112,13 +112,14 @@ void HomeMCU::updateState()
   }
   json["ip"] = WiFi.localIP();
   json["mac"] = WiFi.macAddress();
-  if (configLoaded)
-  {
-    setDeviceStates(json);
-    json["config_checksum"] = currentConfigChecksum;
-  }
   json["build_ts"] = BUILD_TIMESTAMP;
   json["uptime"] = Utils::uptime();
+  if (configLoaded)
+  {
+    json["config_checksum"] = currentConfigChecksum;
+    JsonArray devices = json.createNestedArray("devices");
+    setDeviceStates(devices);
+  }
 
   String msg;
   serializeJson(json, msg);
