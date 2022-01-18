@@ -78,6 +78,7 @@ namespace HomeMCU
 
   void updateState();
   void mqttCallback(char *topic, byte *payload, unsigned int length);
+  void setSubscriptions();
   void checkConnection();
 
   void updateDiscovery(SensorDiscoveryData &data);
@@ -85,6 +86,14 @@ namespace HomeMCU
   void updateDiscovery(NumberDiscoveryData &data);
   void updateDiscovery(SelectDiscoveryData &data);
   void deleteDiscovery(const char *deviceclass, const char *type, const char *field);
+
+  void setupDevices(JsonDocument &json);
+  void loopDevices();
+  void stopDevices();
+  void setDeviceStates(JsonArray &arr);
+  void setDeviceSubscriptions();
+  void handleDeviceCommand(char *device, char *charPayload);
+  void handleDeviceState(char *device, char *charPayload);
 };
 
 #endif

@@ -13,7 +13,7 @@ Ledstrip *ledstrip = nullptr;
  * 
  * @param json The device config
  */
-void setupDevices(JsonDocument &json)
+void HomeMCU::setupDevices(JsonDocument &json)
 {
   {
     JsonObject config = json[MHZ19::type];
@@ -41,7 +41,7 @@ void setupDevices(JsonDocument &json)
 /**
  * @brief This is called every loop. This will process the device specific loops for enabled devices
  */
-void loopDevices()
+void HomeMCU::loopDevices()
 {
   if (mhz19)
     mhz19->loop();
@@ -56,7 +56,7 @@ void loopDevices()
 /**
  * @brief This is called when the MCU enters a stop state, such as pending a restart. 
  */
-void stopDevices()
+void HomeMCU::stopDevices()
 {
   delete mhz19;
   mhz19 = nullptr;
@@ -71,7 +71,7 @@ void stopDevices()
  * 
  * @param json The state object
  */
-void setDeviceStates(JsonArray &arr)
+void HomeMCU::setDeviceStates(JsonArray &arr)
 {
   if (mhz19)
     arr.add(MHZ19::type);
@@ -82,12 +82,25 @@ void setDeviceStates(JsonArray &arr)
 }
 
 /**
+ * @brief Set device-specific subscriptions, such as subscribing to their own state for restoring state after a reboot
+ */
+void HomeMCU::setDeviceSubscriptions()
+{
+  if (ledstrip)
+  {
+    char deviceStateTopic[MQTT_MAX_TOPIC_LENGTH];
+    Utils::getStateTopic(deviceStateTopic, Ledstrip::type);
+    client.subscribe(deviceStateTopic);
+  }
+}
+
+/**
  * @brief Handle command directed to a specific device
  * 
  * @param device devicetype this command is intended for
  * @param charPayload the command payload itself
  */
-void handleDeviceCommand(char *device, char *charPayload)
+void HomeMCU::handleDeviceCommand(char *device, char *charPayload)
 {
   if (strcmp(MHZ19::type, device) == 0 && mhz19)
   {
@@ -112,10 +125,13 @@ void handleDeviceCommand(char *device, char *charPayload)
  * @param device devicetype this state is intended for
  * @param charPayload the state payload itself
  */
-void handleDeviceState(char *device, char *charPayload)
+void HomeMCU::handleDeviceState(char *device, char *charPayload)
 {
   if (strcmp(Ledstrip::type, device) == 0 && ledstrip)
   {
     ledstrip->state(charPayload);
+    char deviceStateTopic[MQTT_MAX_TOPIC_LENGTH];
+    Utils::getStateTopic(deviceStateTopic, Ledstrip::type);
+    client.unsubscribe(deviceStateTopic);
   }
 }

@@ -22,14 +22,6 @@ char deviceStateTopicPrefix[MQTT_MAX_TOPIC_LENGTH];
 uint64_t lastStatusUpdateLog = 0;
 uint64_t lastStatusUpdateMqtt = 0;
 
-// devices.cpp
-void setupDevices(JsonDocument &json);
-void loopDevices();
-void stopDevices();
-void setDeviceStates(JsonArray &arr);
-void handleDeviceCommand(char *device, char *charPayload);
-void handleDeviceState(char *device, char *charPayload);
-
 void HomeMCU::setup()
 {
   Utils::getStateTopic(statusTopic, "status");
@@ -164,18 +156,8 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
 
     configLoaded = true;
     currentConfigChecksum = checksum;
+    setSubscriptions();
     updateState();
-
-    client.unsubscribe(configTopic);
-    client.unsubscribe(commandTopic);
-
-    char deviceStateTopic[MQTT_MAX_TOPIC_LENGTH];
-    Utils::getStateTopic(deviceStateTopic, "+");
-    client.subscribe(deviceStateTopic);
-
-    char deviceCommandTopic[MQTT_MAX_TOPIC_LENGTH];
-    Utils::getStateTopic(deviceCommandTopic, "command/+");
-    client.subscribe(deviceCommandTopic);
   }
   else if (strcmp(topic, commandTopic) == 0)
   {
@@ -240,6 +222,23 @@ void HomeMCU::mqttCallback(char *topic, uint8_t *payload, unsigned int length)
   }
 }
 
+void HomeMCU::setSubscriptions()
+{
+  if (!configLoaded) // MQTT connected but no config loaded yet, subscribe to config and main command topic
+  {
+    client.subscribe(configTopic);
+    client.subscribe(commandTopic);
+  }
+  else // Config loaded and devices set up, subscribe to device specific topics
+  {
+    char deviceCommandTopic[MQTT_MAX_TOPIC_LENGTH];
+    Utils::getStateTopic(deviceCommandTopic, "command/+");
+    client.subscribe(deviceCommandTopic);
+
+    setDeviceSubscriptions();
+  }
+}
+
 void HomeMCU::checkConnection()
 {
   if (client.connected())
@@ -256,10 +255,7 @@ void HomeMCU::checkConnection()
       if (client.connect(WiFi.macAddress().c_str(), MQTT_USERNAME, MQTT_PASSWORD, statusTopic, 0, true, "{\"status\":\"offline\"}"))
       {
         Log::info("MQTT connected");
-
-        client.subscribe(configTopic);
-        client.subscribe(commandTopic);
-
+        setSubscriptions();
         updateState();
       }
       else

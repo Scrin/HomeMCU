@@ -160,6 +160,7 @@ void Ledstrip::state(const char *state)
 {
   if (!stateRestored)
   {
+    Log::info("Restoring ledstrip state");
     command(state);
     stateRestored = true;
   }
